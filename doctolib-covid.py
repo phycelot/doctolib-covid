@@ -11,17 +11,21 @@ centers_urls = [center.strip() for center in centers_urls
 try:
     print("I solemnly swear that I am up to no good.")
     print()
-    while True :
+    while True:
         for center_url in centers_urls:
-            try :
+            try:
                 center = center_url.split("/")[5]
-                raw_data = requests.get("https://www.doctolib.fr/booking/{center}.json")
+                raw_data = requests.get("https://www.doctolib.fr/booking/{}.json".format(center))
                 json_data = raw_data.json()
+                if json_data.get("status") == 404:
+                    print("Center {} not found".format(center))
+                    print(json_data)
+                    continue
                 data = json_data["data"]
 
                 visit_motives = [visit_motive for visit_motive in data["visit_motives"]
-                                if visit_motive["name"].startswith("1re injection") and
-                                "AstraZeneca" not in visit_motive["name"]]
+                                 if visit_motive["name"].startswith("1re injection") and
+                                 "AstraZeneca" not in visit_motive["name"]]
                 if not visit_motives:
                     continue
 
@@ -38,17 +42,14 @@ try:
                     place_address = place["full_address"]
 
                     agendas = [agenda for agenda in data["agendas"]
-                            if agenda["practice_id"] == practice_ids and
-                            not agenda["booking_disabled"] and
-                            visit_motive_ids in agenda["visit_motive_ids"]]
+                               if agenda["practice_id"] == practice_ids and
+                               not agenda["booking_disabled"] and
+                               visit_motive_ids in agenda["visit_motive_ids"]]
                     if not agendas:
                         continue
 
-                    agenda_ids = "-".join([str(agenda["id"]) for agenda in agendas])
-
-                    # print(visit_motive_ids)
-                    # print(practice_ids)
-                    # print(agenda_ids)
+                    agenda_ids = "-".join([str(agenda["id"])
+                                           for agenda in agendas])
 
                     response = requests.get(
                         "https://www.doctolib.fr/availabilities.json",
@@ -72,6 +73,8 @@ try:
                         print(result)
             except json.decoder.JSONDecodeError:
                 print("Doctolib might be ko")
+            except KeyError as e:
+                print("KeyError: " + str(e))
         time.sleep(5)
 except KeyboardInterrupt:
-     print("Mischief managed.")
+    print("Mischief managed.")
