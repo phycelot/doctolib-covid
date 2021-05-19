@@ -11,6 +11,8 @@ centers_urls = [center.strip() for center in centers_urls
 try:
     print("I solemnly swear that I am up to no good.")
     print()
+
+    old_practice_ids = []
     while True:
         for center_url in centers_urls:
             try:
@@ -37,12 +39,12 @@ try:
 
                     start_date = datetime.datetime.today().date().isoformat()
                     visit_motive_ids = visit_motives[0]["id"]
-                    practice_ids = place["practice_ids"][0]
+                    practice_id = place["practice_ids"][0]
                     place_name = place["formal_name"]
                     place_address = place["full_address"]
 
                     agendas = [agenda for agenda in data["agendas"]
-                               if agenda["practice_id"] == practice_ids and
+                               if agenda["practice_id"] == practice_id and
                                not agenda["booking_disabled"] and
                                visit_motive_ids in agenda["visit_motive_ids"]]
                     if not agendas:
@@ -57,7 +59,7 @@ try:
                             "start_date": start_date,
                             "visit_motive_ids": visit_motive_ids,
                             "agenda_ids": agenda_ids,
-                            "practice_ids": practice_ids,
+                            "practice_ids": practice_id,
                             "insurance_sector": "public",
                             "destroy_temporary": "true",
                             "limit": 2
@@ -68,8 +70,9 @@ try:
 
                     result = datetime.datetime.now().strftime("%H:%M:%S") + " " + str(nb_availabilities) + \
                         " appointments are available : " + center_url + \
-                        "?pid=practice-"+str(practice_ids)
-                    if nb_availabilities > 0:
+                        "?pid=practice-"+str(practice_id)
+                    if nb_availabilities > 0 and practice_id not in old_practice_ids:
+                        old_practice_ids.append(practice_id)
                         print(result)
             except json.decoder.JSONDecodeError:
                 print("Doctolib might be ko")
