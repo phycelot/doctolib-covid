@@ -2,6 +2,9 @@ import datetime
 import requests
 import time
 import json
+import webbrowser
+
+OPEN_BROWSER = True
 
 with open('centers-url.txt') as centers_url_txt:
     centers_urls = centers_url_txt.readlines()
@@ -68,12 +71,14 @@ try:
                     response.raise_for_status()
                     nb_availabilities = response.json()["total"]
 
+                    custom_center_url = center_url + "?pid=practice-"+str(practice_id)
                     result = datetime.datetime.now().strftime("%H:%M:%S") + " " + str(nb_availabilities) + \
-                        " appointments are available : " + center_url + \
-                        "?pid=practice-"+str(practice_id)
+                        " appointments are available : " + custom_center_url
                     if nb_availabilities > 0 and practice_id not in old_practice_ids:
                         old_practice_ids.append(practice_id)
                         print(result)
+                        if OPEN_BROWSER :
+                            webbrowser.open_new_tab(custom_center_url)
             except json.decoder.JSONDecodeError:
                 print("Doctolib might be ko")
             except KeyError as e:
