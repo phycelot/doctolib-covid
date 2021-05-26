@@ -1,4 +1,5 @@
 import datetime
+from os import error
 import requests
 import time
 import json
@@ -20,10 +21,12 @@ try:
 
     old_practice_ids = []
     while True:
+        error = False
         for center_url in centers_urls:
             try:
                 center = center_url.split("/")[5]
-                raw_data = requests.get("https://www.doctolib.fr/booking/{}.json".format(center),
+                center_booking_url = "https://www.doctolib.fr/booking/{}.json".format(center)
+                raw_data = requests.get(center_booking_url,
                                         headers=HEADERS)
                 json_data = raw_data.json()
                 if json_data.get("status") == 404:
@@ -86,9 +89,19 @@ try:
                         if OPEN_BROWSER:
                             webbrowser.open_new_tab(custom_center_url)
             except json.decoder.JSONDecodeError:
-                print("Doctolib might be ko")
+                error = True
+                print("Doctolib might be ko, see {}", center_booking_url)
             except KeyError as e:
+                error = True
                 print("KeyError: " + str(e))
+            except requests.exceptions.ConnectionError:
+                error = True
+                print('Connection Error, {} skipped', center)
+            except requests.exceptions.HTTPError:
+                error = True
+                print('HTTPError Error, {} skipped', center)
+        if error :
+            print()
         time.sleep(5)
 except KeyboardInterrupt:
     print("Mischief managed.")
